@@ -90,7 +90,7 @@ fn main() -> ExitCode {
             });
         }
         Err(err) => {
-            eprintln!("Error: {:#}", err);
+            eprintln!("Error: {err:#}");
             return ExitCode::FAILURE;
         }
     }
@@ -115,9 +115,9 @@ fn main() -> ExitCode {
                 term_rx,
                 &mut stdout,
             ) {
-                Ok(_) => ExitCode::SUCCESS,
+                Ok(()) => ExitCode::SUCCESS,
                 Err(err) => {
-                    eprintln!("Error: {:#}", err);
+                    eprintln!("Error: {err:#}");
                     ExitCode::FAILURE
                 }
             }
@@ -130,9 +130,9 @@ fn main() -> ExitCode {
         } => {
             let mut stdout = stdout().lock();
             match stream_backward::run(file, *start_time, *stop_time, grep, term_rx, &mut stdout) {
-                Ok(_) => ExitCode::SUCCESS,
+                Ok(()) => ExitCode::SUCCESS,
                 Err(err) => {
-                    eprintln!("Error: {:#}", err);
+                    eprintln!("Error: {err:#}");
                     ExitCode::FAILURE
                 }
             }

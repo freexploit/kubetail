@@ -24,7 +24,7 @@ pub struct TermReader<R> {
 }
 
 impl<R: Read> TermReader<R> {
-    pub fn new(inner: R, term_rx: Receiver<()>) -> Self {
+    pub const fn new(inner: R, term_rx: Receiver<()>) -> Self {
         Self { inner, term_rx }
     }
 }
@@ -33,7 +33,7 @@ impl<R: Read> Read for TermReader<R> {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         // check for termination before each read
         match self.term_rx.try_recv() {
-            Ok(_) | Err(crossbeam_channel::TryRecvError::Disconnected) => {
+            Ok(()) | Err(crossbeam_channel::TryRecvError::Disconnected) => {
                 return Err(io::Error::new(io::ErrorKind::Interrupted, "terminated"))
             }
             Err(crossbeam_channel::TryRecvError::Empty) => {} // Channel is empty but still connected
@@ -56,7 +56,7 @@ pub struct ReverseLineReader<R: Read + Seek> {
 }
 
 impl<R: Read + Seek> ReverseLineReader<R> {
-    /// Creates a new ReverseLineReader wrapping a seekable reader.
+    /// Creates a new `ReverseLineReader` wrapping a seekable reader.
     pub fn new(mut inner: R, min_pos: u64, max_pos: u64) -> io::Result<Self> {
         let pos = inner.seek(SeekFrom::Start(max_pos))?;
         Ok(Self {
@@ -128,13 +128,12 @@ impl<R: Read + Seek> ReverseLineReader<R> {
                         line_part.push(b'\n');
                         return Ok(Some(line_part));
                     }
-                } else {
-                    // No newline found in the current buffer;
-                    // accumulate the entire buffer (reversed) so that later, when combined, it yields the correct order.
-                    self.line_buf
-                        .extend(self.buf[self.buf_start..self.buf_end].iter().rev());
-                    self.buf_end = self.buf_start;
                 }
+                // No newline found in the current buffer;
+                // accumulate the entire buffer (reversed) so that later, when combined, it yields the correct order.
+                self.line_buf
+                    .extend(self.buf[self.buf_start..self.buf_end].iter().rev());
+                self.buf_end = self.buf_start;
             }
             if self.pos <= self.min_pos {
                 // Reached the beginning of the file.
@@ -225,7 +224,7 @@ mod tests {
         while let Some(line) = reader.next_line()? {
             let line_str = String::from_utf8_lossy(&line);
             let trimmed_line = line_str.trim_end();
-            assert_eq!(trimmed_line, lines[n], "n: {}", n);
+            assert_eq!(trimmed_line, lines[n], "n: {n}");
             n += 1;
         }
 

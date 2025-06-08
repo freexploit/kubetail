@@ -168,7 +168,7 @@ mod test {
             "Number of lines doesn't match"
         );
         for (i, expected) in expected_lines.iter().enumerate() {
-            assert_eq!(&captured_lines[i], expected, "Line {} doesn't match", i);
+            assert_eq!(&captured_lines[i], expected, "Line {i} doesn't match");
         }
     }
 

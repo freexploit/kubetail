@@ -22,8 +22,8 @@ use serde_json;
 
 use crate::util::format::FileFormat;
 
-/// Represents an offset result from find_nearest_offset()
-#[derive(Debug, PartialEq)]
+/// Represents an offset result from `find_nearest_offset()`
+#[derive(Debug, PartialEq, Eq)]
 pub struct Offset {
     pub byte_offset: u64,
     pub line_length: u64,
@@ -94,7 +94,7 @@ fn find_nearest_offset(
     let mut reader = BufReader::new(file);
 
     while left <= right {
-        let mid = (left + right) / 2;
+        let mid = i64::midpoint(left, right);
 
         // Seek to the mid position inside BufReader
         reader.seek(SeekFrom::Start(mid as u64))?;
@@ -190,14 +190,14 @@ fn parse_timestamp(
                 let ts = DateTime::parse_from_rfc3339(timestamp)?.with_timezone(&Utc);
                 Ok(ts)
             } else {
-                Err(format!("missing timestamp field in JSON log: {}", line).into())
+                Err(format!("missing timestamp field in JSON log: {line}").into())
             }
         }
         FileFormat::CRI => {
             // Original CRI format parsing
             let parts: Vec<&str> = line.splitn(2, ' ').collect();
             if parts.len() < 2 {
-                return Err(format!("invalid log line: {}", line).into());
+                return Err(format!("invalid log line: {line}").into());
             }
             let ts = DateTime::parse_from_rfc3339(parts[0])?.with_timezone(&Utc);
             Ok(ts)
@@ -222,12 +222,12 @@ mod common {
 
         for &line in lines {
             offsets.push(Offset {
-                byte_offset: byte_offset,
+                byte_offset,
                 line_length: line.len() as u64,
             });
             tmpfile.write_all(line.as_bytes())?;
             tmpfile.write_all(b"\n")?; // Write a newline after each line.
-            byte_offset += line.as_bytes().len() as u64 + 1;
+            byte_offset += line.len() as u64 + 1;
         }
         tmpfile.flush()?;
         Ok((tmpfile, offsets))
@@ -296,7 +296,7 @@ mod tests_find_nearest_offset_since {
             let target_time = DateTime::parse_from_rfc3339(target_str)?.with_timezone(&Utc);
             let offset =
                 find_nearest_offset_since(&file, target_time, 0, max_offset, FileFormat::CRI)?;
-            assert_eq!(offset.as_ref(), expected, "target: {}", target_str);
+            assert_eq!(offset.as_ref(), expected, "target: {target_str}");
         }
 
         Ok(())
@@ -358,7 +358,7 @@ mod tests_find_nearest_offset_since {
             let target_time = DateTime::parse_from_rfc3339(target_str)?.with_timezone(&Utc);
             let offset =
                 find_nearest_offset_since(&file, target_time, 0, max_offset, FileFormat::Docker)?;
-            assert_eq!(offset.as_ref(), expected, "target: {}", target_str);
+            assert_eq!(offset.as_ref(), expected, "target: {target_str}");
         }
 
         Ok(())
@@ -391,7 +391,7 @@ mod tests_find_nearest_offset_since {
             let target_time = DateTime::parse_from_rfc3339(target_str)?.with_timezone(&Utc);
             let offset =
                 find_nearest_offset_since(&file, target_time, 0, max_offset, FileFormat::CRI)?;
-            assert_eq!(offset.as_ref(), expected, "target: {}", target_str);
+            assert_eq!(offset.as_ref(), expected, "target: {target_str}");
         }
 
         Ok(())
@@ -407,7 +407,7 @@ mod tests_find_nearest_offset_since {
         let target_str = "2024-10-01T05:40:23.308676722Z";
         let target_time = DateTime::parse_from_rfc3339(target_str)?.with_timezone(&Utc);
         let offset = find_nearest_offset_since(&file, target_time, 0, max_offset, FileFormat::CRI)?;
-        assert_eq!(offset, None, "target: {}", target_str);
+        assert_eq!(offset, None, "target: {target_str}");
 
         Ok(())
     }
@@ -423,7 +423,7 @@ mod tests_find_nearest_offset_since {
         let target_str = "2024-10-01T05:40:23.308676722Z";
         let target_time = DateTime::parse_from_rfc3339(target_str)?.with_timezone(&Utc);
         let offset = find_nearest_offset_since(&file, target_time, 0, max_offset, FileFormat::CRI)?;
-        assert_eq!(offset, None, "target: {}", target_str);
+        assert_eq!(offset, None, "target: {target_str}");
 
         Ok(())
     }
@@ -474,7 +474,7 @@ mod tests_find_nearest_offset_since {
             let target_time = DateTime::parse_from_rfc3339(target_str)?.with_timezone(&Utc);
             let offset =
                 find_nearest_offset_since(&file, target_time, 0, max_offset, FileFormat::CRI)?;
-            assert_eq!(offset.as_ref(), expected, "target: {}", target_str);
+            assert_eq!(offset.as_ref(), expected, "target: {target_str}");
         }
 
         Ok(())
@@ -514,7 +514,7 @@ mod tests_find_nearest_offset_since {
             let target_time = DateTime::parse_from_rfc3339(target_str)?.with_timezone(&Utc);
             let offset =
                 find_nearest_offset_since(&file, target_time, 0, max_offset, FileFormat::CRI)?;
-            assert_eq!(offset.as_ref(), expected, "target: {}", target_str);
+            assert_eq!(offset.as_ref(), expected, "target: {target_str}");
         }
 
         Ok(())
@@ -583,7 +583,7 @@ mod tests_find_nearest_offset_until {
             let target_time = DateTime::parse_from_rfc3339(target_str)?.with_timezone(&Utc);
             let offset =
                 find_nearest_offset_until(&file, target_time, 0, max_offset, FileFormat::CRI)?;
-            assert_eq!(offset.as_ref(), expected, "target: {}", target_str);
+            assert_eq!(offset.as_ref(), expected, "target: {target_str}");
         }
 
         Ok(())
@@ -616,7 +616,7 @@ mod tests_find_nearest_offset_until {
             let target_time = DateTime::parse_from_rfc3339(target_str)?.with_timezone(&Utc);
             let offset =
                 find_nearest_offset_until(&file, target_time, 0, max_offset, FileFormat::CRI)?;
-            assert_eq!(offset.as_ref(), expected, "target: {}", target_str);
+            assert_eq!(offset.as_ref(), expected, "target: {target_str}");
         }
 
         Ok(())
@@ -632,7 +632,7 @@ mod tests_find_nearest_offset_until {
         let target_str = "2024-10-01T05:40:23.308676722Z";
         let target_time = DateTime::parse_from_rfc3339(target_str)?.with_timezone(&Utc);
         let offset = find_nearest_offset_until(&file, target_time, 0, max_offset, FileFormat::CRI)?;
-        assert_eq!(offset, None, "target: {}", target_str);
+        assert_eq!(offset, None, "target: {target_str}");
 
         Ok(())
     }
@@ -648,7 +648,7 @@ mod tests_find_nearest_offset_until {
         let target_str = "2024-10-01T05:40:23.308676722Z";
         let target_time = DateTime::parse_from_rfc3339(target_str)?.with_timezone(&Utc);
         let offset = find_nearest_offset_until(&file, target_time, 0, max_offset, FileFormat::CRI)?;
-        assert_eq!(offset, None, "target: {}", target_str);
+        assert_eq!(offset, None, "target: {target_str}");
 
         Ok(())
     }
@@ -699,7 +699,7 @@ mod tests_find_nearest_offset_until {
             let target_time = DateTime::parse_from_rfc3339(target_str)?.with_timezone(&Utc);
             let offset =
                 find_nearest_offset_until(&file, target_time, 0, max_offset, FileFormat::CRI)?;
-            assert_eq!(offset.as_ref(), expected, "target: {}", target_str);
+            assert_eq!(offset.as_ref(), expected, "target: {target_str}");
         }
 
         Ok(())
@@ -739,7 +739,7 @@ mod tests_find_nearest_offset_until {
             let target_time = DateTime::parse_from_rfc3339(target_str)?.with_timezone(&Utc);
             let offset =
                 find_nearest_offset_until(&file, target_time, 0, max_offset, FileFormat::CRI)?;
-            assert_eq!(offset.as_ref(), expected, "target: {}", target_str);
+            assert_eq!(offset.as_ref(), expected, "target: {target_str}");
         }
 
         Ok(())

@@ -14,7 +14,7 @@
 
 /// Represents the format of log files
 #[allow(clippy::upper_case_acronyms)]
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FileFormat {
     /// Docker JSON format logs
     Docker,
@@ -25,6 +25,6 @@ pub enum FileFormat {
 impl Default for FileFormat {
     /// Default to CRI format for backward compatibility
     fn default() -> Self {
-        FileFormat::CRI
+        Self::CRI
     }
 }

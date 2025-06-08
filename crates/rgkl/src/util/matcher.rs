@@ -28,7 +28,7 @@ pub struct PassThroughMatcher {}
 
 impl PassThroughMatcher {
     // Create a new PassThroughMatcher with a zeroed counter.
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self {}
     }
 }
@@ -60,10 +60,10 @@ impl LogFileRegexMatcher {
     pub fn new(
         inner_pattern: &str,
         format: FileFormat,
-    ) -> Result<LogFileRegexMatcher, regex::Error> {
+    ) -> Result<Self, regex::Error> {
         // Replaces spaces with ANSI-tolerant pattern
         let regex_pattern = &inner_pattern.replace(
-            " ",
+            ' ',
             r"(?:(?:\x1B\[[0-9;]*[mK])?)*\s(?:(?:\x1B\[[0-9;]*[mK])?)*",
         );
 
@@ -73,7 +73,7 @@ impl LogFileRegexMatcher {
             .case_insensitive(false)
             .build(regex_pattern)?;
 
-        Ok(LogFileRegexMatcher { inner, format })
+        Ok(Self { inner, format })
     }
 
     /// Locate `needle` (the log string) within `haystack` and return its start

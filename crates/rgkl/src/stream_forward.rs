@@ -39,7 +39,7 @@ use crate::util::{
 pub enum FollowFrom {
     /// Don't follow
     Noop,
-    /// Follow from the start_time argument if present, beginning if not
+    /// Follow from the `start_time` argument if present, beginning if not
     Default,
     /// Follow from the end of the file
     End,
@@ -141,7 +141,7 @@ pub fn run<W: Write>(
 
     // Exit here if termination signal has been received
     match term_rx.try_recv() {
-        Ok(_) | Err(crossbeam_channel::TryRecvError::Disconnected) => {
+        Ok(()) | Err(crossbeam_channel::TryRecvError::Disconnected) => {
             return Ok(()); // Exit cleanly
         }
         Err(crossbeam_channel::TryRecvError::Empty) => {} // Channel is empty but still connected
@@ -260,7 +260,7 @@ mod test {
         // Open the file for appending
         let path = TEST_FILE.path();
         let mut file = std::fs::OpenOptions::new()
-            .write(true)
+            
             .append(true)
             .open(path)?;
 
@@ -294,7 +294,7 @@ mod test {
             "Number of lines doesn't match"
         );
         for (i, expected) in expected_lines.iter().enumerate() {
-            assert_eq!(&captured_lines[i], expected, "Line {} doesn't match", i);
+            assert_eq!(&captured_lines[i], expected, "Line {i} doesn't match");
         }
     }
 

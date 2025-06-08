@@ -40,8 +40,8 @@ impl<F> CallbackWriter<F>
 where
     F: FnMut(&[u8]),
 {
-    /// Creates a new CallbackWriter with an empty buffer.
-    pub fn new(callback: F) -> Self {
+    /// Creates a new `CallbackWriter` with an empty buffer.
+    pub const fn new(callback: F) -> Self {
         Self {
             callback,
             buffer: Vec::new(),
