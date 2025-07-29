@@ -1,3 +1,4 @@
+use clap::Parser;
 use tokio::signal::{ctrl_c, unix::*};
 use tokio::sync::broadcast::{self, Sender};
 use tokio_util::task::TaskTracker;
@@ -5,6 +6,7 @@ use tonic::transport::Server;
 use types::cluster_agent::FILE_DESCRIPTOR_SET;
 use types::cluster_agent::log_metadata_service_server::LogMetadataServiceServer;
 use types::cluster_agent::log_records_service_server::LogRecordsServiceServer;
+mod cli;
 mod logmetadata;
 mod logrecords;
 
@@ -13,6 +15,8 @@ use logrecords::LogRecordsImpl;
 
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
+    let cli = cli::Cli::parse();
+
     let (_, agent_health_service) = tonic_health::server::health_reporter();
 
     let reflection_service = tonic_reflection::server::Builder::configure()
@@ -38,7 +42,7 @@ async fn main() -> eyre::Result<()> {
             term_tx.clone(),
             task_tracker.clone(),
         )))
-        .serve_with_shutdown("[::]:50051".parse()?, shutdown(term_tx))
+        .serve_with_shutdown(cli.address, shutdown(term_tx))
         .await
         .unwrap();
 
